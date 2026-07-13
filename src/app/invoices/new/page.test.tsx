@@ -6,7 +6,8 @@ const dbMocks = vi.hoisted(() => ({
   customerFindMany: vi.fn(),
   jobFindMany: vi.fn(),
   invoiceCounterFindUnique: vi.fn(),
-  invoiceCounterUpsert: vi.fn()
+  invoiceCounterCreate: vi.fn(),
+  invoiceCounterUpdate: vi.fn()
 }));
 
 vi.mock("next/link", () => ({
@@ -21,14 +22,16 @@ vi.mock("@/lib/db", () => ({
   db: {
     customer: { findMany: dbMocks.customerFindMany },
     job: { findMany: dbMocks.jobFindMany },
-    $transaction: vi.fn((cb: any) =>
-      cb({
-        invoiceCounter: {
-          upsert: dbMocks.invoiceCounterUpsert
-        }
-      })
-    )
+    invoiceCounter: {
+      findUnique: dbMocks.invoiceCounterFindUnique,
+      create: dbMocks.invoiceCounterCreate,
+      update: dbMocks.invoiceCounterUpdate
+    }
   }
+}));
+
+vi.mock("@/lib/invoices/auto-number", () => ({
+  generateInvoiceNumber: vi.fn().mockResolvedValue("TP-0001")
 }));
 
 import NewInvoicePage from "./page";
@@ -42,7 +45,6 @@ describe("NewInvoicePage", () => {
     dbMocks.jobFindMany.mockResolvedValue([
       { id: "j1", projectName: "Match Kit", status: "DRAFT" }
     ]);
-    dbMocks.invoiceCounterUpsert.mockResolvedValue({ id: "counter", prefix: "TP-", next: 2 });
   });
 
   it("renders create invoice form with auto-number TP-0001", async () => {

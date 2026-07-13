@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Plus, Receipt } from "lucide-react";
-import { Prisma, InvoicePaymentStatus as PrismaInvoicePaymentStatus } from "@prisma/client";
+type PrismaInvoiceWhereInput = { paymentStatus?: string };
 import { InvoiceList, type InvoiceCard } from "@/components/invoices/invoice-list";
 import { AppShell } from "@/components/layout/app-shell";
 import { db } from "@/lib/db";
@@ -21,8 +21,8 @@ export default async function InvoicesPage({
   searchParams: Promise<{ status?: string }>;
 }) {
   const { status } = await searchParams;
-  const where: Prisma.InvoiceWhereInput = status
-    ? { paymentStatus: status as PrismaInvoicePaymentStatus }
+  const where: PrismaInvoiceWhereInput = status
+    ? { paymentStatus: status as string }
     : {};
 
   const invoices = await db.invoice.findMany({

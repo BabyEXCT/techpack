@@ -4,16 +4,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const dbMocks = vi.hoisted(() => ({
   invoiceFindMany: vi.fn(),
   invoiceCreate: vi.fn(),
-  invoiceCounterUpsert: vi.fn()
+  invoiceFindUnique: vi.fn(),
+  jobUpdate: vi.fn()
+}));
+
+vi.mock("@/lib/invoices/auto-number", () => ({
+  generateInvoiceNumber: vi.fn().mockResolvedValue("INV-001")
 }));
 
 vi.mock("@/lib/db", () => ({
   db: {
     invoice: {
       findMany: dbMocks.invoiceFindMany,
-      create: dbMocks.invoiceCreate
+      create: dbMocks.invoiceCreate,
+      findUnique: dbMocks.invoiceFindUnique
     },
-    $transaction: vi.fn((cb) => cb({ invoiceCounter: { upsert: dbMocks.invoiceCounterUpsert } }))
+    job: {
+      update: dbMocks.jobUpdate
+    }
   }
 }));
 
@@ -59,11 +67,12 @@ describe("POST /api/invoices", () => {
     vi.clearAllMocks();
   });
 
-  it("creates an invoice linked to a customer", async () => {
+  it("creates an invoice and updates job relation", async () => {
     dbMocks.invoiceCreate.mockResolvedValueOnce({
       id: "i1",
       invoiceNumber: "INV-001",
-      total: 120
+      total: 120,
+      customerId: "c1"
     });
 
     const response = await POST(
@@ -97,12 +106,12 @@ describe("POST /api/invoices", () => {
         subtotal: 100,
         notes: "",
         total: 120,
-        paymentStatus: "DRAFT",
-        jobs: {
-          connect: [{ id: "j1" }]
-        }
-      },
-      include: { customer: true, jobs: true }
+        paymentStatus: "DRAFT"
+      }
+    });
+    expect(dbMocks.jobUpdate).toHaveBeenCalledWith({
+      where: { id: "j1" },
+      data: { invoiceId: "i1" }
     });
   });
 
