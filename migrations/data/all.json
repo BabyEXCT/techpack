@@ -1,0 +1,18 @@
+{
+  "User": [],
+  "Customer": [],
+  "InvoiceCounter": [
+    {
+      "id": "counter",
+      "prefix": "TP-",
+      "next": 2
+    }
+  ],
+  "Payment": [],
+  "Invoice": [],
+  "Job": [],
+  "RosterItem": [],
+  "UploadedFile": [],
+  "GeneratedOutput": [],
+  "MessageTemplate": []
+}
