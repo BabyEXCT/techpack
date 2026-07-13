@@ -1,0 +1,2 @@
+﻿{\n  \
+servers\: {\n    \github\: {\n      \type\: \http\,\n      \url\: \https://api.githubcopilot.com/mcp/\\n    }\n  }\n}
