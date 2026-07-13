@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100dvh;
+  }
+}
+
+@layer components {
+  .tile-base {
+    @apply rounded-2xl border border-neutral-200/80 bg-white shadow-soft transition-all duration-300;
+  }
+
+  .tile-hoverable {
+    @apply tile-base hover:shadow-tile hover:-translate-y-px;
+  }
+
+  .label-sm {
+    @apply text-xs font-medium tracking-wide text-neutral-500 uppercase;
+  }
+}

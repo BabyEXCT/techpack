@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+  // D1 migrations handled via wrangler; shadow DB for diffs
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  jobs      Job[]
+}
+
+model Customer {
+  id                      String    @id @default(cuid())
+  name                    String
+  companyName             String?
+  phone                   String?
+  email                   String?
+  address                 String?
+  preferredPaymentMethod  String?
+  deliveryNote            String?
+  notes                   String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+  jobs                    Job[]
+  invoices                Invoice[]
+}
+
+model InvoiceCounter {
+  id     String @id
+  prefix String @default("TP-")
+  next   Int    @default(1)
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  invoiceId String
+  amount    Decimal
+  method    String   // CASH, BANK_TRANSFER, CREDIT_CARD
+  reference String?
+  notes     String?
+  paidAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
+
+model Invoice {
+  id            String               @id @default(cuid())
+  invoiceNumber String               @unique
+  customerId    String
+  subtotal      Decimal              @default(0)
+  notes         String?
+  total         Decimal              @default(0)
+  paymentStatus InvoicePaymentStatus @default(DRAFT)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  customer      Customer             @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  jobs          Job[]
+  payments      Payment[]
+}
+
+model Job {
+  id              String            @id @default(cuid())
+  projectName     String
+  customerName    String?
+  category        String?
+  material        String?
+  collarType      String?
+  cuttingType     String?
+  colorNotes      String?
+  sourceMessage   String?
+  productionNotes String?
+  status          JobStatus         @default(DRAFT)
+  customerId      String?
+  invoiceId       String?
+  workflowStage   WorkflowStage     @default(NEW)
+  priority        JobPriority        @default(NORMAL)
+  approvalDate    DateTime?
+  deliveryDate    DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  ownerId         String
+  owner           User              @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  customer        Customer?         @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  invoice         Invoice?          @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  rosterItems     RosterItem[]
+  files           UploadedFile[]
+  outputs         GeneratedOutput[]
+}
+
+model RosterItem {
+  id        String @id @default(cuid())
+  rowNumber Int
+  name      String?
+  number    String?
+  size      String?
+  remarks   String?
+  jobId     String
+  job       Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model UploadedFile {
+  id           String   @id @default(cuid())
+  kind         FileKind
+  originalName String
+  storagePath  String
+  mimeType     String
+  jobId        String
+  createdAt    DateTime @default(now())
+  job          Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+model GeneratedOutput {
+  id          String     @id @default(cuid())
+  outputType  OutputType
+  storagePath String
+  jobId       String
+  createdAt   DateTime   @default(now())
+  job         Job        @relation(fields: [jobId], references: [id], onDelete: Cascade)
+}
+
+enum JobStatus {
+  DRAFT
+  REVIEW_READY
+  READY_TO_GENERATE
+  GENERATED
+}
+
+enum WorkflowStage {
+  NEW
+  DESIGN
+  WAITING_APPROVAL
+  PRODUCTION
+  DONE
+}
+
+enum JobPriority {
+  NORMAL
+  URGENT
+  RUSH
+}
+
+enum InvoicePaymentStatus {
+  DRAFT
+  SENT
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+}
+
+enum FileKind {
+  LOGO
+  MOCKUP
+  ARTWORK
+  PDF_EXPORT
+  REFERENCE
+}
+
+enum OutputType {
+  TECHPACK_PDF
+  ORDER_SHEET_PDF
+  ARCHIVE_ZIP
+  CUSTOMER_PREVIEW
+}
+
+model MessageTemplate {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  label     String
+  body      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
